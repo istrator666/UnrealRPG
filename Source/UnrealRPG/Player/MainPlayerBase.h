@@ -7,9 +7,10 @@
 #include "InputActionValue.h"
 #include "MainPlayerBase.generated.h"
 
+class AMainPlayerController;
+class UMainPlayerAnimInstance;
 class USpringArmComponent;
 class UCameraComponent;
-class AMainPlayerController;
 class UInputMappingContext;
 class UInputAction;
 
@@ -30,33 +31,42 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Fire(const FInputActionValue& Value);
+	void StopFiring(const FInputActionValue& Value);
 
 private:
 	// Camera
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* SpringArmComponent = nullptr;
+	TObjectPtr<USpringArmComponent> SpringArmComponent = nullptr;
 
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* CameraComponent = nullptr;
+	TObjectPtr<UCameraComponent> CameraComponent = nullptr;
 
 private:
 	// Input
 	UPROPERTY()
-	AMainPlayerController* PlayerController = nullptr;
+	TObjectPtr<AMainPlayerController> PlayerController = nullptr;
 	
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* DefaultMappingContext = nullptr;
+	TObjectPtr<UInputMappingContext> DefaultMappingContext = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* MoveAction = nullptr;
+	TObjectPtr<UInputAction> MoveAction = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* LookAction = nullptr;
+	TObjectPtr<UInputAction> LookAction = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* JumpAction = nullptr;
+	TObjectPtr<UInputAction> JumpAction = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Input", meta = (AllowPrivateAccess = "true"))
-	UInputAction* FireAction = nullptr;
+	TObjectPtr<UInputAction> FireAction = nullptr;
+
+private:
+	// Animation
+	UPROPERTY()
+	TObjectPtr<UMainPlayerAnimInstance> AnimInst = nullptr;
+
+	UPROPERTY(EditAnywhere, Category = "AnimMotage", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAnimMontage> FireMontage = nullptr;
 
 };

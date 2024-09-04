@@ -3,6 +3,7 @@
 
 #include "Player/MainPlayerBase.h"
 #include "Player/MainPlayerController.h"
+#include "Player/MainPlayerAnimInstance.h"
 
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -34,6 +35,9 @@ void AMainPlayerBase::BeginPlay()
 			SubSystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	// Animation
+	AnimInst = Cast<UMainPlayerAnimInstance>(GetMesh()->GetAnimInstance());
 }
 
 void AMainPlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -47,8 +51,8 @@ void AMainPlayerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AMainPlayerBase::Look);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AMainPlayerBase::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AMainPlayerBase::StopJumping);
-		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Triggered, this, &AMainPlayerBase::Fire);
-		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Ongoing, this, &AMainPlayerBase::Fire);
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AMainPlayerBase::Fire);
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AMainPlayerBase::StopFiring);
 	}
 }
 
@@ -86,5 +90,20 @@ void AMainPlayerBase::Look(const FInputActionValue& Value)
 
 void AMainPlayerBase::Fire(const FInputActionValue& Value)
 {
+	bool isFire = Value.Get<bool>();
 	
+	if (isFire)
+	{
+		PlayAnimMontage(FireMontage);
+	}
+}
+
+void AMainPlayerBase::StopFiring(const FInputActionValue& Value)
+{
+	bool isFire = Value.Get<bool>();
+
+	if (!isFire)
+	{
+		StopAnimMontage(FireMontage);
+	}
 }
