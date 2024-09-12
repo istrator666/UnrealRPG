@@ -13,5 +13,12 @@ UCLASS()
 class UNREALRPG_API UMainGameInstance : public UGameInstance
 {
 	GENERATED_BODY()
+
+public:
+	const struct FMonsterDataRow* GetMonsterData(FName _Name);
+
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	UDataTable* MonsterDataTable;
 	
 };
