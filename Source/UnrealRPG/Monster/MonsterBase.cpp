@@ -2,12 +2,17 @@
 
 
 #include "MonsterBase.h"
+#include "AIController/AIControllerBase.h"
 
 // Sets default values
 AMonsterBase::AMonsterBase()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	// AIController 클래스를 설정
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	AIControllerClass = AAIControllerBase::StaticClass();
 
 }
 
