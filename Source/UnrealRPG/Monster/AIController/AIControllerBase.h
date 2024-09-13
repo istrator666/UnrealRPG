@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionComponent.h"
-#include "Perception/AISenseConfig_Sight.h"
 #include "AIControllerBase.generated.h"
 
 /**
@@ -22,14 +21,24 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void OnPossess(APawn* InPawn) override;
+
 	UFUNCTION()
-	void OnTargetDected(AActor* _Actor, FAIStimulus _Stimulus);
+	void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
 
 private:
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	UBehaviorTree* BehaviorTree;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
+	UBlackboardComponent* BlackboardComponent;
+
+	UPROPERTY(EditDefaultsOnly, Category = "AI")
+	UBlackboardData* BlackboardData;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI", meta = (AllowPrivateAccess = "true"))
 	UAIPerceptionComponent* AIPerceptionComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI", meta = (AllowPrivateAccess = "true"))
-	UAISenseConfig_Sight* SightConfig;
+	FName TargetKey;
 	
 };

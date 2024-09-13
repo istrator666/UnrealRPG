@@ -3,17 +3,19 @@
 
 #include "Monster/AIController/AIControllerBase.h"
 #include "GameFramework/Character.h"
-#include "Perception/AIPerceptionSystem.h"
-#include "Perception/AISense_Sight.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "Perception/AISenseConfig_Sight.h"
 
 AAIControllerBase::AAIControllerBase()
 {
-	// Perception Component 생성
+
+	// AIPerceptionComponent 생성 및 설정
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComponent"));
+	SetPerceptionComponent(*AIPerceptionComponent);
 
 	// Sight Configuration 설정
-	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
+	UAISenseConfig_Sight* SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 	SightConfig->SightRadius = 1000.0f;              // AI 시야 거리
 	SightConfig->LoseSightRadius = 1200.0f;          // AI가 플레이어를 잃는 거리
 	SightConfig->PeripheralVisionAngleDegrees = 90.0f; // AI 시야 각도
@@ -27,37 +29,71 @@ AAIControllerBase::AAIControllerBase()
 	AIPerceptionComponent->ConfigureSense(*SightConfig);
 	AIPerceptionComponent->SetDominantSense(SightConfig->GetSenseImplementation());
 
-	// AI가 Actor를 감지할 때 호출될 함수 바인딩
-	AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AAIControllerBase::OnTargetDected);
+	// Perception Updated 델리게이트 바인딩
+	AIPerceptionComponent->OnPerceptionUpdated.AddDynamic(this, &AAIControllerBase::OnPerceptionUpdated);
+
+	TargetKey = "TargetActor";
 
 }
 
 void AAIControllerBase::BeginPlay()
 {
 	Super::BeginPlay();
+
 }
 
-void AAIControllerBase::OnTargetDected(AActor* _Actor, FAIStimulus _Stimulus)
+void AAIControllerBase::OnPossess(APawn* InPawn)
 {
-	// AI가 Actor를 감지했을 때
-	if (_Stimulus.WasSuccessfullySensed())
-	{
-		// 감지한 Actor가 플레이어 캐릭터일 경우
-		ACharacter* DetectedCharacter = Cast<ACharacter>(_Actor);
-		if (DetectedCharacter)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Player Detected: %s"), *DetectedCharacter->GetName());
+	Super::OnPossess(InPawn);
 
-			// 감지된 플레이어를 추적
-			SetFocus(DetectedCharacter);
-			MoveToActor(DetectedCharacter);
+	if (BlackboardData)
+	{
+		if (UseBlackboard(BlackboardData, BlackboardComponent))
+		{
+			if (BehaviorTree)
+			{
+				RunBehaviorTree(BehaviorTree);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("BehaviorTree is not assigned in %s"), *GetName());
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to initialize Blackboard in %s"), *GetName());
 		}
 	}
 	else
 	{
-		// 플레이어를 잃었을 때
-		UE_LOG(LogTemp, Warning, TEXT("Player Lost"));
-		ClearFocus(EAIFocusPriority::Gameplay);
-		StopMovement();
+		UE_LOG(LogTemp, Warning, TEXT("BlackboardData is not assigned in %s"), *GetName());
+	}
+}
+
+void AAIControllerBase::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
+{
+	if (!BlackboardComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BlackboardComponent is null in %s"), *GetName());
+		return;
+	}
+
+	for (AActor* Actor : UpdatedActors)
+	{
+		FActorPerceptionBlueprintInfo Info;
+		AIPerceptionComponent->GetActorsPerception(Actor, Info);
+
+		for (const FAIStimulus& Stimulus : Info.LastSensedStimuli)
+		{
+			if (Stimulus.WasSuccessfullySensed())
+			{
+				Blackboard->SetValueAsObject(TargetKey, Actor);
+				return;
+			}
+			else
+			{
+				Blackboard->ClearValue(TargetKey);
+			}
+		}
 	}
 }
